@@ -18,3 +18,5 @@ This code is not released under any license, however I will not exercise my copy
   {INSERT}{HOME}{PGUP}{DELETE}{END}{PGDOWN}{Prnt Scrn}{SCROLL LOCK}{Pause}
   {Num Lock}{NUM DIVIDE}{NUMMULT}{NUM SUB}{NUM 7}{NUM 8}{NUM 9}{NUM PLUS}{NUM 4}{NUM 5}{NUM 6}{NUM 1}{NUM 2}{NUM 3}{NUM ENTER}{NUM 0}{NUM DECIMAL}
 ```
+
+Modifiers are not supported, for example ^a for {CTRL}a. This is not CaSE SenSiTiVE.
