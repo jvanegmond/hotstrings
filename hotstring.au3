@@ -81,9 +81,13 @@ Func _HotString_EvaluateKey($key)
 EndFunc   ;==>_HotString_EvaluateKey
 
 Func _HotString_CheckHotkeys($current)
-    For $i = 0 To UBound($hotString_hotkeys) - 1
+    For $i = 1 To UBound($hotString_hotkeys) - 1
         If _HotString_Match($hotString_hotkeys[$i], $current) Then
+			_HotString_DebugWrite("Hotstring " & $hotString_hotkeys[$i] & " triggers method " & $hotString_hotfuncs[$i])
             Call($hotString_hotfuncs[$i])
+			If @error Then
+				Call($hotString_hotfuncs[$i], $hotString_hotkeys[$i])
+			EndIf
         EndIf
     Next
 EndFunc   ;==>_HotString_CheckHotkeys
