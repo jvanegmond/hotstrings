@@ -9,6 +9,7 @@
 #include-once
 #include <WinAPI.au3>
 #include <WindowsConstants.au3>
+#include <GUIConstantsEx.au3>
 #include <Array.au3>
 
 Local Const $HOTSTRING_MAXLEN = 250
@@ -25,23 +26,23 @@ Local $initialized = False, $hotString_Debug = False, $hotString_hStub_KeyProc, 
 ;========================================
 
 Func HotStringSet($hotstring, $func = "")
-    If Not $initialized Then _HotString_Initialize()
+	If Not $initialized Then _HotString_Initialize()
 
-    If $hotstring > $HOTSTRING_MAXLEN Then Return SetError(1, 0, -1)
+	If $hotstring > $HOTSTRING_MAXLEN Then Return SetError(1, 0, -1)
 
-    If $func = "" Then
-        ; Clears
-        $i = _ArraySearch($hotString_hotkeys, $hotstring)
-        If $i = -1 Then Return
+	If $func = "" Then
+		; Clears
+		$i = _ArraySearch($hotString_hotkeys, $hotstring)
+		If $i = -1 Then Return
 
-        _ArrayDelete($hotString_hotkeys, $i)
-        _ArrayDelete($hotString_hotfuncs, $i)
-    Else
-        _ArrayAdd($hotString_hotkeys, $hotstring)
-        _ArrayAdd($hotString_hotfuncs, $func)
-    EndIf
+		_ArrayDelete($hotString_hotkeys, $i)
+		_ArrayDelete($hotString_hotfuncs, $i)
+	Else
+		_ArrayAdd($hotString_hotkeys, $hotstring)
+		_ArrayAdd($hotString_hotfuncs, $func)
+	EndIf
 
-    Return 0
+	Return 0
 EndFunc   ;==>HotStringSet
 
 ;========================================
@@ -53,91 +54,91 @@ EndFunc   ;==>HotStringSet
 ;========================================
 
 Func HotStringSetDebug($flag)
-    $hotString_Debug = $flag
+	$hotString_Debug = $flag
 EndFunc   ;==>HotStringSetDebug
 
 Func _HotString_Initialize()
-    $hotString_hStub_KeyProc = DllCallbackRegister("_HotString_KeyProc", "long", "int;wparam;lparam")
-    $hotString_hmod = _WinAPI_GetModuleHandle(0)
-    $hotString_hHook = _WinAPI_SetWindowsHookEx($WH_KEYBOARD_LL, DllCallbackGetPtr($hotString_hStub_KeyProc), $hotString_hmod)
-    $hotString_User32 = DllOpen("user32.dll")
-    $hotString_hWnd = GUICreate("")
-    GUIRegisterMsg($WM_COMMAND, "_HotString_GUIKeyProc")
-    OnAutoItExitRegister("_HotString_OnAutoItExit")
+	$hotString_hStub_KeyProc = DllCallbackRegister("_HotString_KeyProc", "long", "int;wparam;lparam")
+	$hotString_hmod = _WinAPI_GetModuleHandle(0)
+	$hotString_hHook = _WinAPI_SetWindowsHookEx($WH_KEYBOARD_LL, DllCallbackGetPtr($hotString_hStub_KeyProc), $hotString_hmod)
+	$hotString_User32 = DllOpen("user32.dll")
+	$hotString_hWnd = GUICreate("")
+	GUIRegisterMsg($WM_COMMAND, "_HotString_GUIKeyProc")
+	OnAutoItExitRegister("_HotString_OnAutoItExit")
 
-    $initialized = True
+	$initialized = True
+
+	ConsoleWrite($hotString_hWnd & @CRLF)
 EndFunc   ;==>_HotString_Initialize
 
 Func _HotString_EvaluateKey($key)
-    If StringLen($key) > 1 Then
-        $key = "{" & $key & "}"
-    EndIf
+	If StringLen($key) > 1 Then
+		$key = "{" & $key & "}"
+	EndIf
 
-    _HotString_DebugWrite("Received key: " & $key)
-    $hotString_buffer &= $key
+	_HotString_DebugWrite("Received key: " & $key)
+	$hotString_buffer &= $key
 
-    $hotString_buffer = StringRight($hotString_buffer, $HOTSTRING_MAXLEN)
-    _HotString_CheckHotkeys($hotString_buffer)
+	$hotString_buffer = StringRight($hotString_buffer, $HOTSTRING_MAXLEN)
+	_HotString_CheckHotkeys($hotString_buffer)
 EndFunc   ;==>_HotString_EvaluateKey
 
 Func _HotString_CheckHotkeys($current)
-    For $i = 1 To UBound($hotString_hotkeys) - 1
-        If _HotString_Match($hotString_hotkeys[$i], $current) Then
+	For $i = 1 To UBound($hotString_hotkeys) - 1
+		If _HotString_Match($hotString_hotkeys[$i], $current) Then
 			_HotString_DebugWrite("Hotstring " & $hotString_hotkeys[$i] & " triggers method " & $hotString_hotfuncs[$i])
-            Call($hotString_hotfuncs[$i])
+			Call($hotString_hotfuncs[$i])
 			If @error Then
 				Call($hotString_hotfuncs[$i], $hotString_hotkeys[$i])
 			EndIf
-        EndIf
-    Next
+		EndIf
+	Next
 EndFunc   ;==>_HotString_CheckHotkeys
 
 Func _HotString_Match($hotkey, $current)
-    Return StringRight($current, StringLen($hotkey)) = $hotkey
+	Return StringRight($current, StringLen($hotkey)) = $hotkey
 EndFunc   ;==>_HotString_Match
 
 Func _HotString_GUIKeyProc($hWnd, $Msg, $wParam, $lParam)
-    $aRet = DllCall($hotString_User32, 'int', 'GetKeyNameText', 'int', $lParam, 'str', "", 'int', 256)
+	If $hWnd <> $hotString_hWnd Then Return $GUI_RUNDEFMSG ; If this message is not for us, run the AutoIt internal handler
 
-    $sKeyName = $aRet[2]
-    If $sKeyName Then
-        _HotString_EvaluateKey($sKeyName)
-    EndIf
+	$aRet = DllCall($hotString_User32, 'int', 'GetKeyNameText', 'int', $lParam, 'str', "", 'int', 256)
 
-    Return 0 ; dont run autoit internal handler, not sure what it is, but message = handled so do nothing
+	$sKeyName = $aRet[2]
+	If $sKeyName Then
+		_HotString_EvaluateKey($sKeyName)
+	EndIf
+
+	Return 0 ; Don't run the AutoIt internal handler for this GUI
 EndFunc   ;==>_HotString_GUIKeyProc
 
 Func _HotString_KeyProc($nCode, $wParam, $lParam)
-    If $nCode < 0 Then
-        Return _WinAPI_CallNextHookEx($hotString_hHook, $nCode, $wParam, $lParam)
-    EndIf
+	If $nCode >= 0 And $wParam = $WM_KEYDOWN Then
+		Local $tKEYHOOKS = DllStructCreate($tagKBDLLHOOKSTRUCT, $lParam)
 
-    If $wParam = $WM_KEYDOWN Then
-        Local $tKEYHOOKS = DllStructCreate($tagKBDLLHOOKSTRUCT, $lParam)
+		; http://msdn.microsoft.com/en-us/library/ms646300(v=vs.85).aspx
+		$vkKey = DllStructGetData($tKEYHOOKS, "vkCode")
+		$scanCode = DllStructGetData($tKEYHOOKS, "scanCode")
+		$flags = DllStructGetData($tKEYHOOKS, "flags")
 
-        ; http://msdn.microsoft.com/en-us/library/ms646300(v=vs.85).aspx
-        $vkKey = DllStructGetData($tKEYHOOKS, "vkCode")
-        $scanCode = DllStructGetData($tKEYHOOKS, "scanCode")
-        $flags = DllStructGetData($tKEYHOOKS, "flags")
+		$lWantParam = BitShift($scanCode, -16)
+		$lWantParam = BitOR($lWantParam, BitShift($flags, -24))
 
-        $lWantParam = BitShift($scanCode, -16)
-        $lWantParam = BitOR($lWantParam, BitShift($flags, -24))
+		; post message to our local GUI
+		; We use $WM_COMMAND instead of $WM_KEYDOWN/UP because $WM_KEYDOWN/UP automagically consumed some chars such as up, down, enter
+		_WinAPI_PostMessage($hotString_hWnd, $WM_COMMAND, $vkKey, $lWantParam)
+	EndIf
 
-        ; post message to our local GUI
-        ; We use $WM_COMMAND instead of $WM_KEYDOWN/UP because $WM_KEYDOWN/UP automagically consumed some chars such as up, down, enter
-        _WinAPI_PostMessage($hotString_hWnd, $WM_COMMAND, $vkKey, $lWantParam)
-    EndIf
-
-    Return _WinAPI_CallNextHookEx($hotString_hHook, $nCode, $wParam, $lParam)
+	Return _WinAPI_CallNextHookEx($hotString_hHook, $nCode, $wParam, $lParam)
 EndFunc   ;==>_HotString_KeyProc
 
 Func _HotString_OnAutoItExit()
-    _WinAPI_UnhookWindowsHookEx($hotString_hHook)
-    DllCallbackFree($hotString_hStub_KeyProc)
-    DllClose($hotString_User32)
+	_WinAPI_UnhookWindowsHookEx($hotString_hHook)
+	DllCallbackFree($hotString_hStub_KeyProc)
+	DllClose($hotString_User32)
 EndFunc   ;==>_HotString_OnAutoItExit
 
 Func _HotString_DebugWrite($line)
-    If Not $hotString_Debug Then Return
-    ConsoleWrite("HotString: " & $line & @CRLF)
+	If Not $hotString_Debug Then Return
+	ConsoleWrite("HotString: " & $line & @CRLF)
 EndFunc   ;==>_HotString_DebugWrite
