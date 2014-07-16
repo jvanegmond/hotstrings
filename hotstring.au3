@@ -67,8 +67,6 @@ Func _HotString_Initialize()
 	OnAutoItExitRegister("_HotString_OnAutoItExit")
 
 	$initialized = True
-
-	ConsoleWrite($hotString_hWnd & @CRLF)
 EndFunc   ;==>_HotString_Initialize
 
 Func _HotString_EvaluateKey($key)
