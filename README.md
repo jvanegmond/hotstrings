@@ -20,3 +20,5 @@ This code is not released under any license, however I will not exercise my copy
 ```
 
 Modifiers are not supported, for example ^a for {CTRL}a. This is not CaSE SenSiTiVE.
+
+AutoIt forums thread is here: http://www.autoitscript.com/forum/topic/68422-hotstrings-string-hotkeys/
