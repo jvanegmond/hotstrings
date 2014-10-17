@@ -51,8 +51,8 @@ Func hotStringMonitor ()
 	For $i = 1 to $uBnd Step 2
 		if $HotStringPressed = $hotStringReplaceList[$i] Then
 ;			ConsoleWrite("FOUND: " & $HotStringPressed & "=>" & $hotStringReplaceList[$i] & @CRLF)
-			; preceeding the replacement string with ~@| means the typed string shouldn't be deleted
-			If StringLeft($hotStringReplaceList[$i+1],3) = "~@|" Then
+			; preceeding the replacement string with {KEEP} means the typed string shouldn't be deleted
+			If StringLeft($hotStringReplaceList[$i+1],3) = "{KEEP}" Then
 				$stringDeleted = True
 				sendS (StringMid($hotStringReplaceList[$i+1],4))
 			; check if the hotstring should only be activated if in a particular window
