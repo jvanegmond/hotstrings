@@ -3,6 +3,40 @@
 #include <Date.au3>		; used by sendS
 Global $hotStringReplaceList[1]
 
+Func printFile($fileToPrint)
+;	$tmpFile = @scriptDir & "\" & "temp" & StringRight($fileToPrint,4)
+;	FileCopy ($fileToPrint, $tmpFile)
+;	ShellExecute($tmpFile, "", $scriptDir, "print")
+;	FileDelete($tmpFile)
+	ShellExecute($fileToPrint, "", @ScriptDir, "print")
+
+
+	If StringInStr($fileToPrint,".jpg") Then
+		ShellExecute($fileToPrint)
+		$success = _WinWaitActivate("Windows Picture and Fax Viewer","",5)
+		if $success = 0 then Return 0
+		for $i = 1 to 5
+			Send("^p")	; this doesn't work as Workflow Hotkeys overrides it.
+			$success = _WinWaitActivate("Windows Picture and Fax Viewer","",5)
+			if $success = 0 then Return 0
+		Next
+		Sleep(700)
+		Send("!n")
+		Sleep(700)
+		Send("!n")
+		Sleep(700)
+		Send("!n")
+		Sleep(700)
+		Send("!n")
+		Sleep(1000)
+		Send("{enter}")
+	EndIf
+EndFunc
+
+Func showFile($fileToOpen)
+	ShellExecute($fileToOpen)
+EndFunc
+
 Func hotStringSetInit($stringToMonitorFor, $stringToReplaceWith)
 	_ArrayAdd($hotStringReplaceList, $stringToMonitorFor)
 	_ArrayAdd($hotStringReplaceList, $stringToReplaceWith)
@@ -16,7 +50,7 @@ Func hotStringMonitor ()
 	$uBnd = UBound($hotStringReplaceList)-1
 	For $i = 1 to $uBnd Step 2
 		if $HotStringPressed = $hotStringReplaceList[$i] Then
-			ConsoleWrite("FOUND: " & $HotStringPressed & "=>" & $hotStringReplaceList[$i] & @CRLF)
+;			ConsoleWrite("FOUND: " & $HotStringPressed & "=>" & $hotStringReplaceList[$i] & @CRLF)
 			; preceeding the replacement string with ~@| means the typed string shouldn't be deleted
 			If StringLeft($hotStringReplaceList[$i+1],3) = "~@|" Then
 				$stringDeleted = True
@@ -31,7 +65,7 @@ Func hotStringMonitor ()
 							Send ("{BS}")
 						Next
 					EndIf
-					ConsoleWrite("TITLE: " & $hotStringReplaceList[$i] & "=>" & $hotStringReplaceList[$i+1] & @CRLF)
+;					ConsoleWrite("TITLE: " & $hotStringReplaceList[$i] & "=>" & $hotStringReplaceList[$i+1] & @CRLF)
 					sendS (StringMid($hotStringReplaceList[$i+1],StringInStr($hotStringReplaceList[$i+1],"]")+1))
 				EndIf
 			Else
@@ -41,7 +75,7 @@ Func hotStringMonitor ()
 						Send ("{BS}")
 					Next
 				EndIf
-				ConsoleWrite("NONTITLE: " & $hotStringReplaceList[$i] & "=>" & $hotStringReplaceList[$i+1] & @CRLF)
+;				ConsoleWrite("NONTITLE: " & $hotStringReplaceList[$i] & "=>" & $hotStringReplaceList[$i+1] & @CRLF)
 				sendS ($hotStringReplaceList[$i+1])
 			EndIf
 		EndIf
@@ -51,14 +85,14 @@ EndFunc
 Func listHotStringDuplicates()
 	$dupHotStringList = ""
 	$blockHotStringList = ""
-	For $i = 0 to UBound($_hotString_hotkeys)-1
-		For $j = $i+1 to UBound($_hotString_hotkeys)-1
-			If $_hotString_hotkeys[$i] = $_hotString_hotkeys[$j] Then
+	For $i = 0 to UBound($hotString_hotkeys)-1
+		For $j = $i+1 to UBound($hotString_hotkeys)-1
+			If $hotString_hotkeys[$i] = $hotString_hotkeys[$j] Then
 				; exact match
-				$dupHotStringList &= "¬" & $_hotString_hotkeys[$i] & "¬" & @CRLF
-			ElseIf StringLeft($_hotString_hotkeys[$i],StringLen($_hotString_hotkeys[$j])) = $_hotString_hotkeys[$j] Then
+				$dupHotStringList &= "¬" & $hotString_hotkeys[$i] & "¬" & @CRLF
+			ElseIf StringLeft($hotString_hotkeys[$i],StringLen($hotString_hotkeys[$j])) = $hotString_hotkeys[$j] Then
 				; [$j] matches start of [$i] (so will activate prior to [$i]
-				$blockHotStringList &= """" & $_hotString_hotkeys[$j] & """ will block """ & $_hotString_hotkeys[$i] & """" & @CRLF
+				$blockHotStringList &= """" & $hotString_hotkeys[$j] & """ will block """ & $hotString_hotkeys[$i] & """" & @CRLF
 			EndIf
 		Next
 	Next
@@ -76,6 +110,7 @@ EndFunc
 
 Func sendS ($stringToSend)
 	;smart(er) version of Send
+;	beep()
 	UnstickKeys()
 	$stringToSend = StringReplace($stringToSend,"{pause}","{pause 100}")
 	$stringToSend = StringReplace($stringToSend,"{time}",@HOUR & ":" & @MIN)
@@ -89,7 +124,6 @@ Func sendS ($stringToSend)
 	$stringToSend = StringReplace($stringToSend,"{date 1y}",@MDAY & "/" & @MON & "/" & @YEAR +1)
 	$stringToSend = StringReplace($stringToSend,"{pause","||{pause")
 	$stringToSend = StringReplace($stringToSend,"{call ","||{call")
-	$stringToSend = StringReplace($stringToSend,"{RC ","||{RC")
 	$stringToSend = StringReplace($stringToSend,"}","}||")
 	$stringToSend = StringReplace($stringToSend,"||||","||")
 	$stringToSend = StringSplit($stringToSend,"||",1)
@@ -101,12 +135,6 @@ Func sendS ($stringToSend)
 			$stringToSend[$i] = StringReplace($stringToSend[$i],"}","")
 			$sleepDuration = StringStripWS($stringToSend[$i],8)
 			Sleep($sleepDuration)
-		ElseIf StringInStr($stringToSend[$i],"{RC") > 0 then
-			$stringToSend[$i] = StringReplace($stringToSend[$i],"{RC","")
-			$stringToSend[$i] = StringReplace($stringToSend[$i],"}","")
-			$stringToSend[$i] = StringStripWS($stringToSend[$i],3)
-			$stringToSend[$i] = "{APPSKEY}{PAUSE}{ENTER}{PAUSE 150}" & $stringToSend[$i] & "{enter}{PAUSE 150}{APPSKEY}{PAUSE}{ENTER}{pause 200}"
-			Send ($stringToSend[$i])
 		ElseIf StringInStr($stringToSend[$i],"{call") > 0 then
 			$stringToSend[$i] = StringReplace($stringToSend[$i],"{call","")
 			$stringToSend[$i] = StringReplace($stringToSend[$i],"}","")
