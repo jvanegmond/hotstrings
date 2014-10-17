@@ -31,7 +31,7 @@ Local $initialized = False, $hotString_Debug = False, $hotString_hStub_KeyProc, 
 Global $HotStringPressed		; allows monitoring of the typed sequence
 Global $hotStringTimer			; allows monitoring of delays between keypresses
 Global $hotStringMaxInterval = 1500			; allows monitoring of delays between keypresses (can be changed by user)
-Global $hotStringActive			; allows monitoring of delays between keypresses
+Global $hotStringActive 		; stops hotkey sequences from triggering other hotkey sequences
 Global 	$dupHotStringList
 
 
