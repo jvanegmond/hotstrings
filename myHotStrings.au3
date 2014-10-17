@@ -14,12 +14,13 @@
 
 ;{ESC} Doesn't seem to work with Win7 (but unsure if this is universal or a conflict with another installed program)
 
-; preceeding the replacement string with ~@| means the typed string won't be deleted
-;    This will have the side-effect of stopping any hotstrings which rely on the input string.
-;    If you want them to stay active, then keep the delete, but retype the text in the output string
 
 ; *** EXAMPLES ***
-hotStringSetInit("`test", "This is a test")	; this will prelace "`test", with "This is a test (note I often preceed strings with the backquote character at the top left of the qwerty keyboard as this isn't used for much)
+
+; preceeding the replacement string with {NODEL} means the typed string won't be deleted
+hotStringSetInit("`dontdel", "{NODEL} - this keeps the original hotstring text")
+
+hotStringSetInit("`test", "This is a test")	; this will preface "`test", with "This is a test (note I often preceed strings with the backquote character at the top left of the qwerty keyboard as this isn't used for much)
 
 hotStringSetInit("`hsd", "{call listHotStringDuplicates()}")	; this calls a function in hotstrings.au3 to check for conflicts between strings
 
