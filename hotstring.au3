@@ -26,14 +26,11 @@
 
 Local Const $HOTSTRING_MAXLEN = 250
 
-Local $initialized = False, $hotString_Debug = False, $hotString_hStub_KeyProc, $hotString_hmod, $hotString_hHook, $hotString_buffer = "", $hotString_User32, $hotString_hotkeys[1], $hotString_hotfuncs[1], $hotString_hWnd
+Local $initialized = False, $hotString_Debug = False, $hotString_hStub_KeyProc, $hotString_hmod, $hotString_hHook, $hotString_buffer = "", $hotString_User32, $hotString_hotkeys[1], $hotString_hotfuncs[1], $hotString_hWnd, $hotStringTimer = TimerInit()
 
-Global $HotStringPressed		; allows monitoring of the typed sequence
-Global $hotStringTimer			; allows monitoring of delays between keypresses
-Global $hotStringMaxInterval = 1500			; allows monitoring of delays between keypresses (can be changed by user)
-Global $hotStringActive 		; stops hotkey sequences from triggering other hotkey sequences
-Global 	$dupHotStringList
-
+Global $HotStringPressed ; allows monitoring of the typed sequence
+Global $hotStringMaxInterval = 1500 ; allows monitoring of delays between keypresses (can be changed by user)
+Global $hotStringActive ; stops hotkey sequences from triggering other hotkey sequences
 
 ;========================================
 ;
@@ -89,11 +86,10 @@ Func _HotString_Initialize()
 EndFunc   ;==>_HotString_Initialize
 
 Func _HotString_EvaluateKey($key)
-;	if $hotStringActive then Return	; this stops hotstrings calling others, but also stops new hotkey combos from being called by user if (eg) a loop is active.
-
 	; if there's a long delay between keypresses, assume it won't be the same sequence so clear the buffer
 	If TimerDiff($hotStringTimer) > $hotStringMaxInterval Then
-		$_hotString_buffer = ""
+		_HotString_DebugWrite("Clear buffer because of timeout")
+		$hotString_buffer = ""
 	EndIf
 
 	If StringLen($key) > 1 Then
@@ -113,9 +109,7 @@ Func _HotString_CheckHotkeys($current)
 		If _HotString_Match($hotString_hotkeys[$i], $current) Then
 			$HotStringPressed = $hotString_hotkeys[$i]
 			_HotString_DebugWrite("Hotstring " & $hotString_hotkeys[$i] & " triggers method " & $hotString_hotfuncs[$i])
-			$hotStringActive = True		; prevent a hotstring triggering another hotstring
 			Call($hotString_hotfuncs[$i])
-			$hotStringActive = False
 			If @error Then
 				Call($hotString_hotfuncs[$i], $hotString_hotkeys[$i])
 			EndIf
