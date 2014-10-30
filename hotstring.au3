@@ -6,6 +6,18 @@
 ; Dll ...........: user32.dll
 ; ===============================================================================================================================
 
+;Supported keys:
+;{ESC}{F1}{F2}{F3}{F4}{F5}{F6}{F7}{F8}{F9}{F10}{F11}{F12}
+;{GRAVE}1234567890-={BACKSPACE}
+;{TAB}QWERTYUIOP[]\
+;{CAPSLOCK}ASDFGHJKL;{ACUTE/CEDILLA}
+;{SHIFT}ZXCVBNM,./
+;{CTRL}{Left Windows}{SPACE}{Right Windows}{Application}{Right Ctrl}
+;{LEFT}{UP}{RIGHT}{DOWN}
+;{INSERT}{HOME}{PGUP}{DELETE}{END}{PGDOWN}{Prnt Scrn}{SCROLL LOCK}{Pause}
+;{Num Lock}{NUM DIVIDE}{NUMMULT}{NUM SUB}{NUM 7}{NUM 8}{NUM 9}{NUM PLUS}{NUM 4}{NUM 5}{NUM 6}{NUM 1}{NUM 2}{NUM 3}{NUM ENTER}{NUM 0}{NUM DECIMAL}
+
+
 #include-once
 #include <WinAPI.au3>
 #include <WindowsConstants.au3>
@@ -15,6 +27,13 @@
 Local Const $HOTSTRING_MAXLEN = 250
 
 Local $initialized = False, $hotString_Debug = False, $hotString_hStub_KeyProc, $hotString_hmod, $hotString_hHook, $hotString_buffer = "", $hotString_User32, $hotString_hotkeys[1], $hotString_hotfuncs[1], $hotString_hWnd
+
+Global $HotStringPressed		; allows monitoring of the typed sequence
+Global $hotStringTimer			; allows monitoring of delays between keypresses
+Global $hotStringMaxInterval = 1500			; allows monitoring of delays between keypresses (can be changed by user)
+Global $hotStringActive 		; stops hotkey sequences from triggering other hotkey sequences
+Global 	$dupHotStringList
+
 
 ;========================================
 ;
@@ -70,6 +89,13 @@ Func _HotString_Initialize()
 EndFunc   ;==>_HotString_Initialize
 
 Func _HotString_EvaluateKey($key)
+;	if $hotStringActive then Return	; this stops hotstrings calling others, but also stops new hotkey combos from being called by user if (eg) a loop is active.
+
+	; if there's a long delay between keypresses, assume it won't be the same sequence so clear the buffer
+	If TimerDiff($hotStringTimer) > $hotStringMaxInterval Then
+		$_hotString_buffer = ""
+	EndIf
+
 	If StringLen($key) > 1 Then
 		$key = "{" & $key & "}"
 	EndIf
@@ -79,13 +105,17 @@ Func _HotString_EvaluateKey($key)
 
 	$hotString_buffer = StringRight($hotString_buffer, $HOTSTRING_MAXLEN)
 	_HotString_CheckHotkeys($hotString_buffer)
+	$hotStringTimer = TimerInit()
 EndFunc   ;==>_HotString_EvaluateKey
 
 Func _HotString_CheckHotkeys($current)
 	For $i = 1 To UBound($hotString_hotkeys) - 1
 		If _HotString_Match($hotString_hotkeys[$i], $current) Then
+			$HotStringPressed = $hotString_hotkeys[$i]
 			_HotString_DebugWrite("Hotstring " & $hotString_hotkeys[$i] & " triggers method " & $hotString_hotfuncs[$i])
+			$hotStringActive = True		; prevent a hotstring triggering another hotstring
 			Call($hotString_hotfuncs[$i])
+			$hotStringActive = False
 			If @error Then
 				Call($hotString_hotfuncs[$i], $hotString_hotkeys[$i])
 			EndIf
