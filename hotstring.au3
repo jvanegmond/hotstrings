@@ -48,7 +48,7 @@ Func HotStringSet($hotstring, $func = "")
 
 	If $func = "" Then
 		; Clears
-		$i = _ArraySearch($hotString_hotkeys, $hotstring)
+		Local $i = _ArraySearch($hotString_hotkeys, $hotstring)
 		If $i = -1 Then Return
 
 		_ArrayDelete($hotString_hotkeys, $i)
@@ -124,9 +124,9 @@ EndFunc   ;==>_HotString_Match
 Func _HotString_GUIKeyProc($hWnd, $Msg, $wParam, $lParam)
 	If $hWnd <> $hotString_hWnd Then Return $GUI_RUNDEFMSG ; If this message is not for us, run the AutoIt internal handler
 
-	$aRet = DllCall($hotString_User32, 'int', 'GetKeyNameText', 'int', $lParam, 'str', "", 'int', 256)
+	Local $aRet = DllCall($hotString_User32, 'int', 'GetKeyNameText', 'int', $lParam, 'str', "", 'int', 256)
 
-	$sKeyName = $aRet[2]
+	Local $sKeyName = $aRet[2]
 	If $sKeyName Then
 		_HotString_EvaluateKey($sKeyName)
 	EndIf
@@ -139,11 +139,11 @@ Func _HotString_KeyProc($nCode, $wParam, $lParam)
 		Local $tKEYHOOKS = DllStructCreate($tagKBDLLHOOKSTRUCT, $lParam)
 
 		; http://msdn.microsoft.com/en-us/library/ms646300(v=vs.85).aspx
-		$vkKey = DllStructGetData($tKEYHOOKS, "vkCode")
-		$scanCode = DllStructGetData($tKEYHOOKS, "scanCode")
-		$flags = DllStructGetData($tKEYHOOKS, "flags")
+		Local $vkKey = DllStructGetData($tKEYHOOKS, "vkCode")
+		Local $scanCode = DllStructGetData($tKEYHOOKS, "scanCode")
+		Local $flags = DllStructGetData($tKEYHOOKS, "flags")
 
-		$lWantParam = BitShift($scanCode, -16)
+		Local $lWantParam = BitShift($scanCode, -16)
 		$lWantParam = BitOR($lWantParam, BitShift($flags, -24))
 
 		; post message to our local GUI
